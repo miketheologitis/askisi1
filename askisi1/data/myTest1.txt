@@ -17,3 +17,72 @@ PlataniasRd; A; LibertyStatue; 32
 OFC_Avenue; B; LibertyStatue; 25
 CyprusRoad; LibertyStatue; B; 5
 </Roads>
+<Predictions>
+<Day>
+AOAN_Avenue; low
+a2; low
+road3; heavy
+avenue111; low
+lalakisStreet; low
+A2; normal
+E19; heavy
+ErgotelisAve; normal
+NikosStr ; low
+MariaStr ; heavy
+EuterpiStreet ; low
+SpartaRoad ; normal
+PlataniasRd; heavy
+OFC_Avenue; low
+CyprusRoad; normal
+</Day>
+<Day>
+AOAN_Avenue; heavy
+a2; normal
+road3; heavy
+avenue111; low
+lalakisStreet; low
+A2; normal
+E19; low
+ErgotelisAve; normal
+NikosStr ; low
+MariaStr ; heavy
+EuterpiStreet ; normal
+SpartaRoad ; normal
+PlataniasRd; heavy
+OFC_Avenue; low
+CyprusRoad; low
+</Day>
+<Day>
+AOAN_Avenue; low
+a2; low
+road3; heavy
+avenue111; low
+lalakisStreet; low
+A2; normal
+E19; heavy
+ErgotelisAve; normal
+NikosStr ; low
+MariaStr ; heavy
+EuterpiStreet ; low
+SpartaRoad ; normal
+PlataniasRd; heavy
+OFC_Avenue; low
+CyprusRoad; normal
+</Day>
+<Day>
+AOAN_Avenue; heavy
+a2; normal
+road3; heavy
+avenue111; low
+lalakisStreet; low
+A2; normal
+E19; low
+ErgotelisAve; normal
+NikosStr ; low
+MariaStr ; heavy
+EuterpiStreet ; normal
+SpartaRoad ; normal
+PlataniasRd; heavy
+OFC_Avenue; low
+CyprusRoad; low
+</Day>
