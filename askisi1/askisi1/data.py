@@ -1,5 +1,6 @@
 from pathlib import Path
 from collections import defaultdict
+from decimal import Decimal
 
 """
 weights is a dictionary with key = (Node1, Node2), value = weight, but 
@@ -26,6 +27,9 @@ class Data:
         self.parse_destination()
         self.parse_roads()
         self.skip_line()
+        
+        self.printTest()
+        self.parse_day_predictions()
     
     def skip_line(self):
         self.file.readline()
@@ -47,12 +51,47 @@ class Data:
             self.graph[tmp[2]].add(tmp[1])
 
             #create weights so that weight[Node1, Node2] = weight[Node2, Node1] and we will fix weights from predictions
-            self.weight[tmp[1],tmp[2]] = tmp[3]
-            self.weight[tmp[2],tmp[1]] = tmp[3]
+            self.weight[tmp[1],tmp[2]] = int(tmp[3])
+            self.weight[tmp[2],tmp[1]] = int(tmp[3])
 
-            #create road so that road["RoadName"] = (Node20, Node30)
-            self.road[tmp[0]] = tmp[1],tmp[2]
+            #create road so that road["RoadName"] = (Node20, Node30, normal weight)
+            self.road[tmp[0]] = tmp[1],tmp[2],int(tmp[3])
             line = self.file.readline().strip()
+
+    #TODO SIMANTIKO: prepei na allazw ta weight asxeta an einai > func(..) giati mporei na min uparxei allo street
+    #HOW TODO: na arxikopoiw ta weight san -1 h kati tetoio kai na tsekarw!
+    def parse_day_predictions(self):
+        self.skip_line()
+        line = self.file.readline().strip()
+        while(line != "</Day>"):
+            tmp = line.replace(" ", "").split(";")
+
+            #fix the weight
+            if(tmp[1]=="low"):
+                nodes = self.road[tmp[0]][0:2]
+                new_weight = self.weight_in_low_traffic(self.road[tmp[0]][2])
+                if(self.weight[nodes] > new_weight):
+                    self.weight[nodes] = new_weight
+                    self.weight[nodes[1],nodes[0]] = new_weight
+            elif(tmp[1]=="heavy"):
+                nodes = self.road[tmp[0]][0:2]
+                new_weight = self.weight_in_heavy_traffic(self.road[tmp[0]][2])
+                if(self.weight[nodes] > new_weight):
+                    self.weight[nodes] = new_weight
+                    self.weight[nodes[1],nodes[0]] = new_weight
+            else:
+                nodes = self.road[tmp[0]][0:2]
+                new_weight = self.road[tmp[0]][2]
+                if(self.weight[nodes] > new_weight):
+                    self.weight[nodes] = new_weight
+                    self.weight[nodes[1],nodes[0]] = new_weight
+
+            line = self.file.readline().strip()
+    
+    def weight_in_heavy_traffic(self, number): 
+        return float(Decimal(number)*Decimal(1.25))
+    def weight_in_low_traffic(self, number): 
+        return float(Decimal(number)*Decimal(0.9))
 
     def printTest(self):
         print()
@@ -67,3 +106,4 @@ class Data:
         print("________ROAD_________")
         for r in self.road:
             print(r , ":", self.road[r])
+    
