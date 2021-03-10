@@ -11,7 +11,8 @@ weights[A,B] = weightOf(Road1). In few words we will fix the weight of A->B and 
 to single graph with SAFETY!
 We will use road dictionary to use the predictions and fix our weights. Example: weight[road["Road20"]] = ... , if it is necessary
 """
-#TODO: problem because when we take the roads we dont remember what that road's weight was since we store in weight one of the road weights(we dont remember who's road)
+#https://cyluun.github.io/blog/uninformed-search-algorithms-in-python
+#https://www.youtube.com/watch?v=dRMvK76xQJI ucs algorithm
 class Data:
     def __init__(self, filename):
         #https://stackoverflow.com/questions/40416072/reading-file-using-relative-path-in-python-project
@@ -28,7 +29,7 @@ class Data:
         self.parse_roads()
         self.skip_line()
         
-        self.printTest()
+        #TODO more
         self.parse_day_predictions()
     
     def skip_line(self):
@@ -51,41 +52,40 @@ class Data:
             self.graph[tmp[2]].add(tmp[1])
 
             #create weights so that weight[Node1, Node2] = weight[Node2, Node1] and we will fix weights from predictions
-            self.weight[tmp[1],tmp[2]] = int(tmp[3])
-            self.weight[tmp[2],tmp[1]] = int(tmp[3])
+            self.weight[tmp[1],tmp[2]] = -1
+            self.weight[tmp[2],tmp[1]] = -1
 
             #create road so that road["RoadName"] = (Node20, Node30, normal weight)
             self.road[tmp[0]] = tmp[1],tmp[2],int(tmp[3])
             line = self.file.readline().strip()
 
-    #TODO SIMANTIKO: prepei na allazw ta weight asxeta an einai > func(..) giati mporei na min uparxei allo street
-    #HOW TODO: na arxikopoiw ta weight san -1 h kati tetoio kai na tsekarw!
     def parse_day_predictions(self):
         self.skip_line()
         line = self.file.readline().strip()
         while(line != "</Day>"):
             tmp = line.replace(" ", "").split(";")
-
+            
             #fix the weight
+            nodes = self.road[tmp[0]][0:2]  #means nodes = road["Road1"][0:2] = (Node1, Node2)
+            normal_weight = self.road[tmp[0]][2] #means normal_weight = road["Road1"][3] = weight
+
+            #here we check whether the new weight depending on heavy, low or normal should be placed
+            #in our weight dictionary. The weight dictionary is initialized with -1 weights
+            #so if our new_weight is < the old weight (or the old wieght is -1) then replace 
             if(tmp[1]=="low"):
-                nodes = self.road[tmp[0]][0:2]
-                new_weight = self.weight_in_low_traffic(self.road[tmp[0]][2])
-                if(self.weight[nodes] > new_weight):
+                new_weight = self.weight_in_low_traffic(normal_weight)
+                if(self.weight[nodes] > new_weight or self.weight[nodes] == -1):
                     self.weight[nodes] = new_weight
                     self.weight[nodes[1],nodes[0]] = new_weight
             elif(tmp[1]=="heavy"):
-                nodes = self.road[tmp[0]][0:2]
-                new_weight = self.weight_in_heavy_traffic(self.road[tmp[0]][2])
-                if(self.weight[nodes] > new_weight):
+                new_weight = self.weight_in_heavy_traffic(normal_weight)
+                if(self.weight[nodes] > new_weight or self.weight[nodes] == -1):
                     self.weight[nodes] = new_weight
                     self.weight[nodes[1],nodes[0]] = new_weight
             else:
-                nodes = self.road[tmp[0]][0:2]
-                new_weight = self.road[tmp[0]][2]
-                if(self.weight[nodes] > new_weight):
-                    self.weight[nodes] = new_weight
-                    self.weight[nodes[1],nodes[0]] = new_weight
-
+                if(self.weight[nodes] > normal_weight or self.weight[nodes] == -1):
+                    self.weight[nodes] = normal_weight
+                    self.weight[nodes[1],nodes[0]] = normal_weight
             line = self.file.readline().strip()
     
     def weight_in_heavy_traffic(self, number): 
@@ -93,7 +93,7 @@ class Data:
     def weight_in_low_traffic(self, number): 
         return float(Decimal(number)*Decimal(0.9))
 
-    def printTest(self):
+    def print_test(self):
         print()
         print("________GRAPH_________")
         for node in self.graph:
