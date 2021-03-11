@@ -1,6 +1,7 @@
 from pathlib import Path
 from collections import defaultdict
 from decimal import Decimal
+from algorithms import ucs
 
 """
 weights is a dictionary with key = (Node1, Node2), value = weight, but 
@@ -29,8 +30,6 @@ class Data:
         self.parse_roads()
         self.skip_line()
         
-        #TODO more
-        self.parse_day_predictions()
     
     def skip_line(self):
         self.file.readline()
@@ -62,9 +61,11 @@ class Data:
     def parse_day_predictions(self):
         self.skip_line()
         line = self.file.readline().strip()
+
         while(line != "</Day>"):
+            #self.reset_weight()
             tmp = line.replace(" ", "").split(";")
-            
+        
             #fix the weight
             nodes = self.road[tmp[0]][0:2]  #means nodes = road["Road1"][0:2] = (Node1, Node2)
             normal_weight = self.road[tmp[0]][2] #means normal_weight = road["Road1"][3] = weight
@@ -92,18 +93,39 @@ class Data:
         return float(Decimal(number)*Decimal(1.25))
     def weight_in_low_traffic(self, number): 
         return float(Decimal(number)*Decimal(0.9))
-
+    
+    def reset_weight(self):
+        for key in self.weight:
+            self.weight[key] = -1
+    
+    def make_prediction(self):
+        return ucs(self.graph, self.weight, self.source, self.destination)
+    
+    def print_path_cost(self, lst):
+        cost = 0
+        for i in range(len(lst)-1):
+            cost += self.weight[lst[i],lst[i+1]]
+        return cost
+        
     def print_test(self):
+        self.print_graph()
+        self.print_weight()
+        self.print_road()
+    def print_graph(self):
         print()
         print("________GRAPH_________")
         for node in self.graph:
             print(node, ":", self.graph[node])
         print()
+    def print_weight(self):
+        print()
         print("________WEIGHT_________")
         for node1, node2 in self.weight:
             print((node1,node2) , ":", self.weight[node1,node2])
+        print()
+    def print_road(self):
         print()    
         print("________ROAD_________")
         for r in self.road:
             print(r , ":", self.road[r])
-    
+        print()
