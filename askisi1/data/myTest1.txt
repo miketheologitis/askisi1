@@ -6,7 +6,7 @@ a2; A; B; 31
 road3; A; B; 18
 avenue111; Square1821; A; 12
 lalakisStreet; A; B; 19
-A2; Square1821; B; 15
+A2; Square1821; B; 50
 E19; A; B; 23
 ErgotelisAve; C; LibertyStatue; 12
 NikosStr; B; C; 12
@@ -52,6 +52,8 @@ PlataniasRd; heavy
 OFC_Avenue; low
 CyprusRoad; low
 </Day>
+</Predictions>
+<ActualTrafficPerDay>
 <Day>
 AOAN_Avenue; low
 a2; low
@@ -67,7 +69,7 @@ EuterpiStreet ; low
 SpartaRoad ; normal
 PlataniasRd; heavy
 OFC_Avenue; low
-CyprusRoad; normal
+CyprusRoad; heavy
 </Day>
 <Day>
 AOAN_Avenue; heavy
@@ -86,3 +88,4 @@ PlataniasRd; heavy
 OFC_Avenue; low
 CyprusRoad; low
 </Day>
+</ActualTrafficPerDay>
