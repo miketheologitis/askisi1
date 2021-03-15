@@ -1,5 +1,6 @@
 from queue import PriorityQueue
 import time
+import math
 
 #https://towardsdatascience.com/introduction-to-priority-queues-in-python-83664d3178c3  -> PriorityQueue
 """
@@ -72,3 +73,35 @@ def backtrace(parent, start, end):
         path.append(parent[path[-1]])
     path.reverse()
     return path
+
+
+#https://stackoverflow.com/questions/3282823/get-the-key-corresponding-to-the-minimum-value-within-a-dictionary
+#https://likegeeks.com/python-dijkstras-algorithm/
+#https://www.codingame.com/playgrounds/1608/shortest-paths-with-dijkstras-algorithm/dijkstras-algorithm
+def dijktra_create_heuristic(graph, heuristic_help, goal): #create approximaiton of distance of every node to goal, from low predictions (cheapest)
+    costs = {}
+    unvisited = {}
+    visited = set() #relaxed nodes
+
+    #initialize costs
+    for node in graph:
+        unvisited[node] = math.inf
+        costs[node] = math.inf
+    costs[goal] = 0
+    unvisited[goal] = 0
+
+    while len(unvisited)>0:
+        current_node = min(unvisited, key=unvisited.get)
+        visited.add(current_node)
+        costs[current_node] = unvisited[current_node] #update the final cost of the current_node, since it is for sure the cheapest 
+        del unvisited[current_node] #delete current_node key from unvisited dictionary
+
+        for node in graph[current_node]:
+            if(node in visited):
+                continue
+            if(costs[current_node]+heuristic_help[current_node, node] < unvisited[node]):
+                unvisited[node] = costs[current_node]+heuristic_help[current_node, node]
+    return costs
+
+
+#https://www.algorithms-and-technologies.com/iterative_deepening_a_star/python

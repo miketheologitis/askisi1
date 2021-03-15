@@ -1,7 +1,7 @@
 from pathlib import Path
 from collections import defaultdict
 from decimal import Decimal
-from algorithms import ucs
+from algorithms import ucs, dijktra_create_heuristic
 import random
 
 """
@@ -25,11 +25,14 @@ class Data:
         self.destination = ""
         self.graph = defaultdict(set) #dictionary with key=Node , value={AdjacentNode1, AdjacentNode2, ...}
         self.weight = {} #dictionary with key=(Node1, Node2), value=weight
-        self.weight_roads = {} #dictionary with the chosen road connecting two nodes each day (cheapest)
+        self.weight_roads = {} #dictionary with the chosen road connecting two nodes each day (cheapest) weight_roads(NodeA, NodeB) = cheapest road
         self.road_info = {} #dictionary with key="RoadName1" , value=(Node20,Node30, normal weight)
         self.traffic_prediction = {} #predictions
         self.real_traffic = {} #actual daily traffic
         self.day = 1
+
+        self.heuristic_help = {}
+        self.heuristic = {}
 
         self.p1 = 0.6 #this is the chance of making the RIGHT prediction
         self.p2 = 0.2 #this is the chance of overestimaton of cost
@@ -39,6 +42,8 @@ class Data:
         self.parse_destination()
         self.parse_roads()
         self.file.readline()
+        
+        self.init_heuristic()
 
         self.go_to_actual_traffic()
         
@@ -76,7 +81,11 @@ class Data:
 
             #create road weights so that weight_roads[Node1, Node2] = RoadA which is the chosen road each day connecting two nodes
             self.weight_roads[tmp[2],tmp[1]] = None
-            self.weight_roads[tmp[2],tmp[1]] = None
+            self.weight_roads[tmp[1],tmp[2]] = None
+
+            self.heuristic_help[tmp[2],tmp[1]] = None
+            self.heuristic_help[tmp[1],tmp[2]] = None
+
 
             #create road so that road["RoadName"] = (Node20, Node30, normal weight)
             self.road_info[tmp[0]] = tmp[1],tmp[2],int(tmp[3])
@@ -213,6 +222,36 @@ class Data:
         self.print_weight()
         self.print_road_weight()
         self.print_road_info()
+        self.print_heuristic_help()
+        self.print_heuristic()
+    
+    #heuristic_help : connect two nodes with the cheapest low traffic cost that can exist in our graph (regardless of predictions)
+    #will be used to create our heuristic later
+    def init_heuristic(self):
+        for road in self.road_info:
+            node_a, node_b = self.road_info[road][0:2]
+            cost = self.road_info[road][2]
+            if(self.heuristic_help[node_a,node_b] == None or self.heuristic_help[node_a,node_b] > self.weight_in_low_traffic(cost)):
+                self.heuristic_help[node_a,node_b] = self.weight_in_low_traffic(cost)
+                self.heuristic_help[node_b,node_a] = self.weight_in_low_traffic(cost)
+
+        self.heuristic = dijktra_create_heuristic(self.graph, self.heuristic_help, self.destination)
+    
+    def print_heuristic(self):
+        print()
+        print("________HEURISTIC_________")
+        for node in self.heuristic:
+            print(node, self.heuristic[node])
+        print()
+
+    def print_heuristic_help(self):
+        print()
+        print("________HEURISTIC HELP_________")
+        for nodes in self.heuristic_help:
+            print(nodes, self.heuristic_help[nodes])
+        print()
+
+
     def print_graph(self):
         print()
         print("________GRAPH_________")

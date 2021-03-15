@@ -3,8 +3,8 @@ from pathlib import Path
 from testing import Test
 
 def main():
-    first_test = Test("myTest1.txt")
-    first_test.print_test()
+    my_test = Test("myTest1.txt")
+    my_test.solution()
 
 if __name__ == "__main__":
     sys.exit(main())
