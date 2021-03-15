@@ -55,8 +55,8 @@ CyprusRoad; low
 </Predictions>
 <ActualTrafficPerDay>
 <Day>
-AOAN_Avenue; low
-a2; low
+AOAN_Avenue; heavy
+a2; normal
 road3; heavy
 avenue111; low
 lalakisStreet; low

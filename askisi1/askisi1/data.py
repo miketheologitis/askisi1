@@ -23,17 +23,17 @@ class Data:
 
         self.source = ""
         self.destination = ""
-        self.graph = defaultdict(set) #BIDIRECTIONAL GRAPH with dictionary with key=Node , value={AdjacentNode1, AdjacentNode2, ...}
+        self.graph = defaultdict(set) #dictionary with key=Node , value={AdjacentNode1, AdjacentNode2, ...}
         self.weight = {} #dictionary with key=(Node1, Node2), value=weight
         self.weight_roads = {} #dictionary with the chosen road connecting two nodes each day (cheapest)
-        self.road_info = {} #dictionary with key="RoadName1" , value=(Node20,Node30)
+        self.road_info = {} #dictionary with key="RoadName1" , value=(Node20,Node30, normal weight)
         self.traffic_prediction = {} #predictions
-        self.real_traffic = {} #actual traffic predictions
-        self.day = 0
+        self.real_traffic = {} #actual daily traffic
+        self.day = 1
 
         self.p1 = 0.6 #this is the chance of making the RIGHT prediction
-        self.p2 = 0.2 #this is the propability of making a bad prediction (meaning "heavy" and it actually is "normal", or "normal" and it is actually "heavy,low", ..)
-        self.p3 = 0.2 #this is the propability of making a TERRIBLE prediction (meaning we have "heavy" and it actually is "low")
+        self.p2 = 0.2 #this is the chance of overestimaton of cost
+        self.p3 = 0.2 #this is the chance of underestimation of cost
         
         self.parse_source()
         self.parse_destination()
@@ -106,33 +106,30 @@ class Data:
                 self.weight_roads[nodes[1],nodes[0]] = tmp[0]
             line = self.file.readline().strip()
             
-    
     def prediction_weight(self, traffic, road): #return the new weight based on our propabilities p1,p2,p3
         rand = random.random() #random number between 0-1
 
         if (traffic == "low"):
             if(rand <= self.p1): #then choose our prediction
                 return self.weight_in_low_traffic(self.road_info[road][2]) #road_info["Road1"][3] = normal weight, and we return low traffic weight
-            elif(rand <= (self.p1+self.p2)): #then a bad prediction happened
+            elif(rand <= (self.p1+self.p2)): #p2 : overestimation of cost, so low -> low
+                return self.weight_in_low_traffic(self.road_info[road][2]) #we return low traffic weight
+            else: #p3 : underestimation of cost
                 return self.road_info[road][2] #we return normal traffic weight
-            else: #then a TERRIBLE prediction happened
-                return self.weight_in_heavy_traffic(self.road_info[road][2]) #we return heavy traffic weight
         elif(traffic == "heavy"):
             if(rand <= self.p1): #then choose our prediction
                 return self.weight_in_heavy_traffic(self.road_info[road][2]) #road_info["Road1"][3] = normal weight, and we return heavy traffic weight
-            elif(rand <= (self.p1+self.p2)): #then a bad prediction happened
+            elif(rand <= (self.p1+self.p2)): #p2 : overestimation of cost, so heavy -> normal
                 return self.road_info[road][2] #we return normal traffic weight
-            else: #then a TERRIBLE prediction happened
-                return self.weight_in_low_traffic(self.road_info[road][2]) #we return low traffic weight
-        else: #only a bad prediction can happen here because we have normal weight and we can only go to the actual prediction as "heavy" or "low"
+            else: #p3: underestimation of cost so heavy -> heavy
+                return self.weight_in_heavy_traffic(self.road_info[road][2]) #we return heavy traffic weight
+        else:
             if(rand <= self.p1): #then choose our prediction
                 return self.road_info[road][2] #return normal weight
-            else: 
-                rand2 = random.random()
-                if(rand2<=0.5): #make a random choice between "low" and "heavy" because only a bad prediction can happen (NOT a TERRIBLE)
-                    return self.weight_in_low_traffic(self.road_info[road][2])
-                else:
-                    return self.weight_in_heavy_traffic(self.road_info[road][2])
+            elif(rand <= (self.p1+self.p2)): #p2 : overestimation of cost, so normal -> low
+                return self.weight_in_low_traffic(self.road_info[road][2]) #we return low traffic weight
+            else: #p3: underestimation of cost so normal -> heavy
+                return self.weight_in_heavy_traffic(self.road_info[road][2]) #we return heavy traffic weight
 
     def weight_in_heavy_traffic(self, number): 
         return float(Decimal(number)*Decimal(1.25))
@@ -167,7 +164,45 @@ class Data:
             else:
                 cost += self.road_info[road][2]
         return cost
-    
+        
+    #BIG NOUS
+    def fix_propabilities(self):
+        count_p1 = 0
+        count_p2 = 0
+        count_p3 = 0
+        count_roads = 0
+        for road in self.traffic_prediction:
+            count_roads += 1
+            if(self.traffic_prediction[road] == "low"):
+                if(self.real_traffic[road] == "low"): #prediction correct
+                    count_p1 += 1
+                elif(self.real_traffic[road] == "heavy"): #cost was underestimated
+                    count_p3 += 1 
+                else: #cost was underestimated
+                    count_p3 += 1 
+            elif(self.traffic_prediction[road] == "heavy"):
+                if(self.real_traffic[road] == "heavy"): #prediction correct
+                    count_p1 += 1
+                elif(self.real_traffic[road] == "low"): #cost was overestimated
+                    count_p2 += 1
+                else: #cost was overestimated
+                    count_p2 += 1
+            else:
+                if(self.real_traffic[road] == "normal"): #prediction correct
+                    count_p1 += 1
+                elif(self.real_traffic[road] == "heavy"): #cost was underestimated
+                    count_p3 += 1
+                else: #cost was overestimated
+                    count_p2 += 1
+
+        new_p1 = count_p1/count_roads
+        new_p2 = count_p2/count_roads
+        new_p3 = count_p3/count_roads
+
+        self.p1 = self.p1*(self.day/(self.day+1))+new_p1/(self.day+1)
+        self.p2 = self.p2*(self.day/(self.day+1))+new_p2/(self.day+1)
+        self.p3 = self.p3*(self.day/(self.day+1))+new_p3/(self.day+1)
+
     def next_day(self):
         self.reset_weight()
         self.reset_weight_road()
