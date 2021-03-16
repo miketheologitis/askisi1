@@ -1,8 +1,9 @@
 from pathlib import Path
 from collections import defaultdict
 from decimal import Decimal
-from algorithms import ucs, dijktra_create_heuristic
+from algorithms import ucs, dijkstra_create_heuristic, ida_star
 import random
+
 
 """
 weights is a dictionary with key = (Node1, Node2), value = weight, but 
@@ -156,6 +157,9 @@ class Data:
     def find_ucs_path(self):
         return ucs(self.graph, self.weight, self.source, self.destination)
     
+    def find_ida_star_path(self):
+        return ida_star(self.graph, self.weight, self.heuristic, self.source, self.destination)
+    
     def predicted_path_cost(self, path):
         cost = 0
         for i in range(len(path)-1):
@@ -228,14 +232,14 @@ class Data:
     #heuristic_help : connect two nodes with the cheapest low traffic cost that can exist in our graph (regardless of predictions)
     #will be used to create our heuristic later
     def init_heuristic(self):
-        for road in self.road_info:
+        for road in self.road_info: 
             node_a, node_b = self.road_info[road][0:2]
             cost = self.road_info[road][2]
             if(self.heuristic_help[node_a,node_b] == None or self.heuristic_help[node_a,node_b] > self.weight_in_low_traffic(cost)):
                 self.heuristic_help[node_a,node_b] = self.weight_in_low_traffic(cost)
                 self.heuristic_help[node_b,node_a] = self.weight_in_low_traffic(cost)
 
-        self.heuristic = dijktra_create_heuristic(self.graph, self.heuristic_help, self.destination)
+        self.heuristic = dijkstra_create_heuristic(self.graph, self.heuristic_help, self.destination)
     
     def print_heuristic(self):
         print()
