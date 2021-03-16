@@ -5,22 +5,68 @@ from algorithms import ucs, dijkstra_create_heuristic, ida_star
 import random
 
 
-"""
-weights is a dictionary with key = (Node1, Node2), value = weight, but 
-the idea about weights is for example A->B weight will get a specific value (actually the last value stored from a road to A,B or B,A so that
-weights[A,B] = weights[B,A]) and even though this might NOT be the lowest weight we dont care. This is because weights will get "fixed" by the 
-predictions of each day, so that FOR EXAMPLE if a Road1 (from A->B or B->A) is low traffic and weightOf(Road1)<weights[A,B] THEN 
-weights[A,B] = weightOf(Road1). In few words we will fix the weight of A->B and B->A when we make our predictions and we will TRANSFORM the multigraph
-to single graph with SAFETY!
-We will use road dictionary to use the predictions and fix our weights. Example: weight[road["Road20"]] = ... , if it is necessary
-"""
 #https://cyluun.github.io/blog/uninformed-search-algorithms-in-python
 #https://www.youtube.com/watch?v=dRMvK76xQJI ucs algorithm
+
+"""
+    A class used to modify, parse and store data from our files
+
+    ...
+
+    Attributes
+    ----------
+    file : file
+        the file which is used to parse the source, destination, road info AND then all the daily predictions
+    file_traff : file
+        the file which is used to parse the REAL traffic , the next day
+    source : String
+        our starting node
+    graph : Dictionary
+        Our dictionary of sets representing a graph with key = NodeA, value = set(NodeB,NodeG, ..) . Example: graph[NodeA] = (NodeB, NodeG, ..)
+    weight: Dictionary
+        My dictionary with key = set(NodeA, NodeB), value = (int) weight to go from NodeA to NodeB 
+        IMPORTAND: 
+        Since we have many ways of connecting NodeA, NodeB in our graph (possibly many different roads), each day, based on the predictions
+        I choose the cheapest path to connect NodeA, NodeB and this value is stored in this weight dictionary. Every day this weight might
+        change because for example: the road with which we connected NodeA, NodeB the previous day, now has a prediction of "heavy" traffic and there is a cheaper road
+        connecting these two nodes. EACH DAY the weight dictionary resets, and gets recreated based on our next days' predictions!
+    weight_roads: Dictionary
+        My dictionary with key = set(NodeA, NodeB), value = RoadA . The string value RoadA is the cheapest road we CHOSE the last day to connect these two nodes, 
+        which also corresponds to weight[NodeA, NodeB]. Each day the cheapest road gets chosen (based on predictions) to connect two nodes and the road name gets stored
+        in weight_roads[(. , .)], and the cost of traversing it gets stored in weight[(. , .)]. EACH DAY the weight_roads dictionary resets, and gets recreated based on our next days' predictions!
+    road_info: Dictionary
+        All the road info we read in the first file lines. key = RoadA, value = (NodeA, NodeB, normal_cost) . RoadA is the String name of each rode, and (NodeA, NodeB, normal_cost)
+        is a set with the nodes that this RoadA connects, and the NORMAL cost of traversing it.
+    traffic_prediction: Dictionary
+        Each days' traffic predictions. key = RoadName, value = predictions (ex. "low")
+    real_traffic: Dictionary
+        Each days' real traffic. key = RoadName, value = traffic (ex. "low")
+    day: int
+        What day it is
+    heuristic_help: Dictionary
+        This dictionary is used to create our heuristic dictionary and gets created once with key = set(NodeA, NodeB) , value = cheapest weight connecting them
+        IMPORTAND:
+        Cheapest weight connecting them means, that we take for every road the "low" cost , and FROM ALL those roads connecting NodeA, NodeB we store the CHEAPEST cost 
+        of connecting those two nodes. This is regardless of any prediction since we take "low" cost to ALL roads. This dictionary will be used to create our heuristic dictionary
+    heuristic: Dictionary
+        This is the heuristic dictionary with key = NodeA, value = cheapest cost to go from goal to nodeA . 
+        It is created with my dijkstra algorithm, finding the cheapest cost to go from goal to each node and storing this cost in heuristic dictionary. It uses the heuristic_help
+        dictionary aswell. See dijkstra_create_heuristic(graph, heuristic_help, goal) , in algorithms.py for more information.
+    p1: float
+        This is the probability of making a CORRECT prediction
+    p2: float
+        This is the probability of overestimating the cost (or else overestimating the traffic) in a prediction
+    p1: float
+        This is the probability of underestimating the cost (or else underestimating the traffic) in a prediction
+    Methods
+    -------
+"""
+
 class Data:
     def __init__(self, filename):
         #https://stackoverflow.com/questions/40416072/reading-file-using-relative-path-in-python-project
         self.file = open(Path(__file__).parent  / ("../data/"+filename), "r")
-        self.file_traff = open(Path(__file__).parent  / ("../data/"+filename), "r") #file_predictions, file_pred is used to read the actual traffic
+        self.file_traff = open(Path(__file__).parent  / ("../data/"+filename), "r") #file_predictions, file_pred is used to read the real traffic
 
         self.source = ""
         self.destination = ""
@@ -39,14 +85,14 @@ class Data:
         self.p2 = 0.2 #this is the chance of overestimaton of cost
         self.p3 = 0.2 #this is the chance of underestimation of cost
         
-        self.parse_source()
-        self.parse_destination()
-        self.parse_roads()
-        self.file.readline()
+        self.parse_source()  #parse the source vertex
+        self.parse_destination() #parse the destination vertex
+        self.parse_roads() #parse all info about roads
+        self.file.readline() #skip a line
         
-        self.init_heuristic()
+        self.init_heuristic() #create our heuristic function (created by dijkstra) to be used by IDA* algorithm
 
-        self.go_to_actual_traffic()
+        self.go_to_actual_traffic() #move file_traff (open file) to be ready to parse real daily traffic
         
     def go_to_actual_traffic(self):
         while(self.file_traff.readline().strip() != "<ActualTrafficPerDay>"):
@@ -170,15 +216,20 @@ class Data:
         cost = 0
         for i in range(len(path)-1):
             road = self.weight_roads[path[i], path[i+1]] #get chosen road (connecting the path nodes) from our weight_roads dictionary
-            if(self.real_traffic[road] == "heavy"):
+            if(self.real_traffic[road] == "heavy"):  #check according to the traffic each day what was the actual cost of using those roads
                 cost += self.weight_in_heavy_traffic(self.road_info[road][2])
-            elif(self.real_traffic[road] == "low"):
+            elif(self.real_traffic[road] == "low"): #check according to the traffic each day what was the actual cost of using those roads
                 cost += self.weight_in_low_traffic(self.road_info[road][2])
-            else:
+            else: #check according to the traffic each day what was the actual cost of using those roads
                 cost += self.road_info[road][2]
         return cost
         
     #BIG NOUS
+    #This function reads traffic_prediction and real_traffic and compares the two dictionaries each day, counting how many instances of different predictions we have for
+    #p1,p2,p3 called count_p1, count_p2, count_p3. According to them we find the new propabilities new_p1,new_p2,new_p3.
+    # Then the new_p1, new_p2, new_p3 are used to find the AVERAGE of them with the current p1,p2,p3 ACCORDING to what day it is
+    # Example: Lets say we have at the end of day 3, p1 = 0.63 and we find new_p1 = 0.7. 
+    # Then the p1 = p1*(3/4) + new_p1/4  OR  p1 = p1*(day/(day+1)) + new_p1/(day+1)   , to put numbers in we have at day 4 ->  p1 = 0.63*(3/4)+0.73/4 -> p1 = 0.655
     def fix_propabilities(self):
         count_p1 = 0
         count_p2 = 0
@@ -220,14 +271,6 @@ class Data:
         self.reset_weight()
         self.reset_weight_road()
         self.day += 1
-
-    def print_test(self):
-        self.print_graph()
-        self.print_weight()
-        self.print_road_weight()
-        self.print_road_info()
-        self.print_heuristic_help()
-        self.print_heuristic()
     
     #heuristic_help : connect two nodes with the cheapest low traffic cost that can exist in our graph (regardless of predictions)
     #will be used to create our heuristic later
@@ -241,6 +284,18 @@ class Data:
 
         self.heuristic = dijkstra_create_heuristic(self.graph, self.heuristic_help, self.destination)
     
+    """
+    Down here are all the print tests ive used to make sure my code is running well and as intended. No use reading it.
+    """
+    def print_test(self):
+        self.print_graph()
+        self.print_weight()
+        self.print_road_weight()
+        self.print_road_info()
+        self.print_heuristic_help()
+        self.print_heuristic()
+        self.print_pred_actual()
+
     def print_heuristic(self):
         print()
         print("________HEURISTIC_________")
@@ -254,8 +309,6 @@ class Data:
         for nodes in self.heuristic_help:
             print(nodes, self.heuristic_help[nodes])
         print()
-
-
     def print_graph(self):
         print()
         print("________GRAPH_________")

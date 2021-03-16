@@ -18,34 +18,25 @@ class Test:
             self.data.parse_actual_traffic()  #parse the real daily traffic
             self.data.fix_propabilities()  #fix p1,p2,p3 based on our real traffic (and predicted traffic, last day)
 
-            real_cost = self.data.find_real_cost(ucs_path) #find the real cost of our chosen path (based on real traffic)
+            ucs_real_cost = self.data.find_real_cost(ucs_path) #find the real cost of our chosen path (based on real traffic)
+            ida_star_real_cost = self.data.find_real_cost(ida_star_path)
             
             print("DAY", self.data.day)
+            self.print_test("Uniform Cost Search", ucs_visited_nodes, ucs_time, ucs_path, ucs_prediction_cost, ucs_real_cost)
+            self.print_test("IDA*", ida_star_visited_nodes, ida_star_time, ida_star_path, ida_star_cost, ida_star_real_cost)
 
-            print("Uniform-Cost Search:")
-            print(" "*self.offset,"Visited Nodes Number: ", ucs_visited_nodes)
-            print(" "*self.offset,"Execution time: ", '%f' % ucs_time)
-            print(" "*self.offset,"Path: ", end="")
-            print(*ucs_path, sep=" -> ")
-            self.print_cost_of_roads(ucs_path)
-            print(" "*self.offset,"Predicted Cost:", "{:.2f}".format(round(ucs_prediction_cost, 2)))
-            print(" "*self.offset,"Real Cost: ", "{:.2f}".format(round(real_cost, 2)))
-            print()
-            
-            print("IDA*:")
-            print(" "*self.offset,"Visited Nodes Number: ", ida_star_visited_nodes)
-            print(" "*self.offset,"Execution time: ", '%f' % ida_star_time)
-            print(" "*self.offset,"Path: ", end="")
-            print(*ida_star_path, sep=" -> ")
-            self.print_cost_of_roads(ida_star_path)
-            print(" "*self.offset,"Predicted Cost:", "{:.2f}".format(round(ida_star_cost, 2)))
-            print(" "*self.offset,"Real Cost: ", "{:.2f}".format(round(real_cost, 2)))
-            print()
-            
-            #self.data.print_pred_actual()
-            
-            #self.data.print_test()
-            self.data.next_day() #change the day and reset weight, weight_roads (dictionaries)
+            self.data.next_day() #change the day (data.day++) and reset weight, weight_roads (dictionaries)
+
+    def print_test(self, alg_name, visited_nodes, time, path, prediction_cost, real_cost):
+        print(alg_name,":")
+        print(" "*self.offset,"Visited Nodes Number: ", visited_nodes)
+        print(" "*self.offset,"Execution time: ", '%f' % time)
+        print(" "*self.offset,"Path: ", end="")
+        print(*path, sep=" -> ")
+        self.print_cost_of_roads(path)
+        print(" "*self.offset,"Predicted Cost:", "{:.2f}".format(round(prediction_cost, 2)))
+        print(" "*self.offset,"Real Cost: ", "{:.2f}".format(round(real_cost, 2)))
+        print()
 
     def print_cost_of_roads(self, path):
         print(" "*self.offset,"Road Cost:", end = " ")

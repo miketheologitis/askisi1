@@ -152,7 +152,7 @@ def ida_star_rec(graph, weight, heuristic, goal, distance, threshold):
     global ida_star_visited_nodes
     global ida_star_path
 
-    node = ida_star_path[-1]
+    node = ida_star_path[-1] #choose the last node that was put in the path
     f = distance + heuristic[node]
 
     if f > threshold: #Breached threshold with heuristic
@@ -166,7 +166,7 @@ def ida_star_rec(graph, weight, heuristic, goal, distance, threshold):
     for child in graph[node]:
         if child not in ida_star_path:
             ida_star_visited_nodes += 1
-            ida_star_path.append(child)
+            ida_star_path.append(child) #put child as the last one in the path
             t, boolean = ida_star_rec(graph, weight, heuristic, goal, distance + weight[node,child], threshold)
             if (boolean): #We have found the goal node, from one of the children (or children of children of ...)
                 return t, True
