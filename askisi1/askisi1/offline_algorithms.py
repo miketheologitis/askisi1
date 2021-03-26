@@ -61,7 +61,7 @@ def ucs(graph, weight, start, end):
                         dict_node_weight[node] = new_ucs_weight #store the new cheaper weight to our node
                         parent[node] = current_node #update parent
                         fringe.put((new_ucs_weight, node))
-                    #else: do nothing because we want to
+                    #else: do nothing (so no need to put it)
                 else:
                     dict_node_weight[node] = new_ucs_weight #store the weight
                     parent[node] = current_node #update parent
@@ -91,7 +91,7 @@ def dijkstra_create_heuristic(graph, heuristic_help, goal): #create approximaito
     costs[goal] = 0
     unvisited[goal] = 0
 
-    while len(unvisited)>0: #while there are nodes in unvisited
+    while unvisited: #while there are nodes in unvisited
         current_node = min(unvisited, key=unvisited.get) #get the node with the least cost , which in the first case will obviously be goal (with cost 0)
         visited.add(current_node) #add current_node to visited
         costs[current_node] = unvisited[current_node] #since current_node was chosen, its cost on unvisited dictionary is final, and the cheapest one. so store it on costs[current_node]
@@ -132,11 +132,9 @@ def ida_star(graph, weight, heuristic, start, goal):
 
     while True:
         distance, boolean = ida_star_rec(graph, weight, heuristic, goal, 0, threshold)
-        if (boolean):
-            # we found the goal
+        if (boolean): # we found the goal
             return (time.perf_counter()-start_time), ida_star_visited_nodes, distance, ida_star_path
-        else:
-            # if it hasn't found the node, it returns the next-bigger threshold
+        else: # if it hasn't found the node, it returns the next-bigger threshold
             threshold = distance
 
 """

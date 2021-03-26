@@ -1,7 +1,7 @@
 from pathlib import Path
 from collections import defaultdict
 from decimal import Decimal
-from algorithms import ucs, dijkstra_create_heuristic, ida_star
+from offline_algorithms import ucs, dijkstra_create_heuristic, ida_star
 import random
 
 
@@ -61,7 +61,6 @@ import random
     Methods
     -------
 """
-
 class Data:
     def __init__(self, filename):
         #https://stackoverflow.com/questions/40416072/reading-file-using-relative-path-in-python-project
