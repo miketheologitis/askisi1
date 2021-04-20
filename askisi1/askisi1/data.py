@@ -5,9 +5,6 @@ from offline_algorithms import ucs, dijkstra_create_heuristic, ida_star
 import random
 
 
-#https://cyluun.github.io/blog/uninformed-search-algorithms-in-python
-#https://www.youtube.com/watch?v=dRMvK76xQJI ucs algorithm
-
 """
     A class used to modify, parse and store data from our files
 
@@ -30,10 +27,10 @@ import random
         I choose the cheapest path to connect NodeA, NodeB and this value is stored in this weight dictionary. Every day this weight might
         change because for example: the road with which we connected NodeA, NodeB the previous day, now has a prediction of "heavy" traffic and there is a cheaper road
         connecting these two nodes. EACH DAY the weight dictionary resets, and gets recreated based on our next days' predictions!
-    weight_roads: Dictionary
+    chosen_road: Dictionary
         My dictionary with key = set(NodeA, NodeB), value = RoadA . The string value RoadA is the cheapest road we CHOSE the last day to connect these two nodes, 
         which also corresponds to weight[NodeA, NodeB]. Each day the cheapest road gets chosen (based on predictions) to connect two nodes and the road name gets stored
-        in weight_roads[(. , .)], and the cost of traversing it gets stored in weight[(. , .)]. EACH DAY the weight_roads dictionary resets, and gets recreated based on our next days' predictions!
+        in chosen_road[(. , .)], and the cost of traversing it gets stored in weight[(. , .)]. EACH DAY the chosen_road dictionary resets, and gets recreated based on our next days' predictions!
     road_info: Dictionary
         All the road info we read in the first file lines. key = RoadA, value = (NodeA, NodeB, normal_cost) . RoadA is the String name of each rode, and (NodeA, NodeB, normal_cost)
         is a set with the nodes that this RoadA connects, and the NORMAL cost of traversing it.
@@ -61,6 +58,7 @@ import random
     Methods
     -------
 """
+#https://codereview.stackexchange.com/questions/163414/adjacency-list-graph-representation-on-python
 class Data:
     def __init__(self, filename):
         #https://stackoverflow.com/questions/40416072/reading-file-using-relative-path-in-python-project
@@ -71,7 +69,7 @@ class Data:
         self.destination = ""
         self.graph = defaultdict(set) #dictionary with key=Node , value={AdjacentNode1, AdjacentNode2, ...}
         self.weight = {} #dictionary with key=(Node1, Node2), value=weight
-        self.weight_roads = {} #dictionary with the chosen road connecting two nodes each day (cheapest) weight_roads(NodeA, NodeB) = cheapest road
+        self.chosen_road = {} #dictionary with the chosen road connecting two nodes each day (cheapest) chosen_road(NodeA, NodeB) = cheapest road
         self.road_info = {} #dictionary with key="RoadName1" , value=(Node20,Node30, normal weight)
         self.traffic_prediction = {} #predictions
         self.real_traffic = {} #actual daily traffic
@@ -111,7 +109,6 @@ class Data:
             self.real_traffic[tmp[0]] = tmp[1]
             line = self.file_traff.readline().strip()
             
-    #https://codereview.stackexchange.com/questions/163414/adjacency-list-graph-representation-on-python
     def parse_roads(self):
         self.file.readline()
         line = self.file.readline().strip()
@@ -125,9 +122,9 @@ class Data:
             self.weight[tmp[1],tmp[2]] = None
             self.weight[tmp[2],tmp[1]] = None
 
-            #create road weights so that weight_roads[Node1, Node2] = RoadA which is the chosen road each day connecting two nodes
-            self.weight_roads[tmp[2],tmp[1]] = None
-            self.weight_roads[tmp[1],tmp[2]] = None
+            #create road weights so that chosen_road[Node1, Node2] = RoadA which is the chosen road each day connecting two nodes
+            self.chosen_road[tmp[2],tmp[1]] = None
+            self.chosen_road[tmp[1],tmp[2]] = None
 
             self.heuristic_help[tmp[2],tmp[1]] = None
             self.heuristic_help[tmp[1],tmp[2]] = None
@@ -157,8 +154,8 @@ class Data:
                 self.weight[nodes] = new_weight
                 self.weight[nodes[1],nodes[0]] = new_weight
                 #cheapest road from nodeA to nodeB
-                self.weight_roads[nodes] = tmp[0]
-                self.weight_roads[nodes[1],nodes[0]] = tmp[0]
+                self.chosen_road[nodes] = tmp[0]
+                self.chosen_road[nodes[1],nodes[0]] = tmp[0]
             line = self.file.readline().strip()
             
     def prediction_weight(self, traffic, road): #return the new weight based on our propabilities p1,p2,p3
@@ -192,8 +189,8 @@ class Data:
         return float(Decimal(number)*Decimal(0.9))
 
     def reset_weight_road(self):
-        for key in self.weight_roads:
-            self.weight_roads[key] = None
+        for key in self.chosen_road:
+            self.chosen_road[key] = None
 
     def reset_weight(self):
         for key in self.weight:
@@ -214,7 +211,7 @@ class Data:
     def find_real_cost(self, path):
         cost = 0
         for i in range(len(path)-1):
-            road = self.weight_roads[path[i], path[i+1]] #get chosen road (connecting the path nodes) from our weight_roads dictionary
+            road = self.chosen_road[path[i], path[i+1]] #get chosen road (connecting the path nodes) from our chosen_road dictionary
             if(self.real_traffic[road] == "heavy"):  #check according to the traffic each day what was the actual cost of using those roads
                 cost += self.weight_in_heavy_traffic(self.road_info[road][2])
             elif(self.real_traffic[road] == "low"): #check according to the traffic each day what was the actual cost of using those roads
@@ -322,9 +319,9 @@ class Data:
         print()
     def print_road_weight(self):
         print()
-        print("________ROAD WEIGHT_________")
-        for node1, node2 in self.weight_roads:
-            print((node1,node2) , ":", self.weight_roads[node1,node2])
+        print("________CHOSEN ROAD_________")
+        for node1, node2 in self.chosen_road:
+            print((node1,node2) , ":", self.chosen_road[node1,node2])
         print()
     def print_road_info(self):
         print()    
@@ -337,6 +334,6 @@ class Data:
         print("________PREDICTIONS_________")
         for k in self.traffic_prediction:
             print(k, ":", self.traffic_prediction[k])
-        print("________ACTUAL_________")
+        print("________REAL TRAFFIC_________")
         for k in self.real_traffic:
             print(k, ":", self.real_traffic[k])

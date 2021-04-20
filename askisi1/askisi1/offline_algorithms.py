@@ -3,6 +3,8 @@ import time
 import math
 
 #https://towardsdatascience.com/introduction-to-priority-queues-in-python-83664d3178c3  -> PriorityQueue
+#https://cyluun.github.io/blog/uninformed-search-algorithms-in-python
+#https://www.youtube.com/watch?v=dRMvK76xQJI ucs algorithm
 """
 This is a Uniform Cost Search , with some differences (I will note them bellow)
 I expand nodes according to their path costs form the root node. 
@@ -124,7 +126,7 @@ def ida_star(graph, weight, heuristic, start, goal):
     start_time = time.perf_counter() #time
     global ida_star_visited_nodes
     global ida_star_path
-    ida_star_path.clear() #clear the path from the previous day
+    ida_star_path.clear() 
     ida_star_visited_nodes = 0
 
     threshold = heuristic[start]

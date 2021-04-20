@@ -33,16 +33,16 @@ class Test:
             
             #self.data.print_test()
             print("DAY", self.data.day)
-            self.print_test("Uniform Cost Search", ucs_visited_nodes, ucs_time, ucs_path, ucs_cost, ucs_real_cost)
+            self.print_test("UCS", ucs_visited_nodes, ucs_time, ucs_path, ucs_cost, ucs_real_cost)
             self.print_test("IDA*", ida_star_visited_nodes, ida_star_time, ida_star_path, ida_star_cost, ida_star_real_cost)
             print("LRTA* :")
             print(" "*self.offset,"Execution time: ", '%f' % lrta_time)
-            print(" "*self.offset, "Cost Of All Moves:", lrta_sum_cost)
             print(" "*self.offset,"Path: ", end="")
             print(*lrta_path, sep=" -> ")
+            print(" "*self.offset, "Cost Of All Moves:", lrta_sum_cost)
             print()
 
-            self.data.next_day() #change the day (data.day++) and reset weight, weight_roads (dictionaries)
+            self.data.next_day() #change the day (data.day++) and reset weight, chosen_road (dictionaries)
         print("Average daily Uniform Cost Search (UCS) cost: ", "{:.2f}".format(round(ucs_sum_cost/80.0, 2)))
         print("Average daily Iterative Deepening A* (IDA*) cost: ", "{:.2f}".format(round(ida_star_sum_cost/80.0, 2)))
         print()
@@ -61,10 +61,10 @@ class Test:
         print(" "*self.offset,"Road Cost:", end = " ")
         for i in range(len(path)-1):
             if(i != len(path)-2):
-                print(self.data.weight_roads[path[i],path[i+1]], "(", 
+                print(self.data.chosen_road[path[i],path[i+1]], "(", 
                 "{:.2f}".format(round(float(self.data.weight[path[i],path[i+1]]), 2)),") ->", end=" ")
             else:
-                print(self.data.weight_roads[path[i],path[i+1]], "(", 
+                print(self.data.chosen_road[path[i],path[i+1]], "(", 
                 "{:.2f}".format(round(float(self.data.weight[path[i],path[i+1]]), 2)),")")
 
 

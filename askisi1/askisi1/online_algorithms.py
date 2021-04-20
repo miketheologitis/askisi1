@@ -30,7 +30,7 @@ class OnlineLRTAstar():
                 H[parent] = cost[parent, current] + self.d.heuristic[current]
             parent = current
             current = self.chooseNextNode(current, H)
-            cost[parent, current] = self.findRealMinCost(parent, current) #we are allowed to find it because we have traversed the road, and now we are at the next node
+            cost[parent, current] = self.traverseMinCost(parent, current) #we are allowed to find it because we have traversed the road, and now we are at the next node
             all_moves_cost += cost[parent, current]
             
     def chooseNextNode(self, current, H):
@@ -47,7 +47,7 @@ class OnlineLRTAstar():
                     min_node = node
         return min_node
 
-    def findRealMinCost(self, parent, current): #considering someone at node a can see the traffic to all the connecting roads towards b
+    def traverseMinCost(self, parent, current): #considering someone at node A can see the traffic to all the connecting roads towards B
         min_cost = math.inf
         for road in self.d.road_info:
             if(self.d.road_info[road][0:2] == (parent,current) or self.d.road_info[road][0:2] == (current,parent)):
@@ -63,5 +63,3 @@ class OnlineLRTAstar():
             return self.d.weight_in_heavy_traffic(weight)
         else:
             return weight
-    #as orisoume to action a = roadChosen. exontas to roadinfo exoume tis plirofories poy mas endiaferoun. prosoxi oti duo nodes ta sundeoun polloi dromoi
-    # this is a problem for the future we will see
